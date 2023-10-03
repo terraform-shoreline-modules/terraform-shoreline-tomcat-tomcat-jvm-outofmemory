@@ -1,0 +1,162 @@
+{
+  "name": "tomcat_jvm_outofmemory_incident",
+  "description": "Tomcat JVM OutOfMemory incident occurs when the Java Virtual Machine (JVM) running the Apache Tomcat server runs out of memory, which causes the server to crash or become unresponsive. This type of incident can happen due to a variety of reasons such as incorrect configuration settings, memory leaks, or insufficient memory allocation. When this incident occurs, it can impact the availability and performance of the web application running on the Tomcat server.",
+  "params": [
+    {
+      "name": "TOMCAT_PID",
+      "value": ""
+    },
+    {
+      "name": "THRESHOLD",
+      "value": ""
+    },
+    {
+      "name": "PATH_TO_TOMCAT",
+      "value": ""
+    },
+    {
+      "name": "HEAP_DUMP_FILE_PATH",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Tomcat JVM OutOfMemory Incident\nTomcat JVM OutOfMemory incident occurs when the Java Virtual Machine (JVM) running the Apache Tomcat server runs out of memory, which causes the server to crash or become unresponsive. This type of incident can happen due to a variety of reasons such as incorrect configuration settings, memory leaks, or insufficient memory allocation. When this incident occurs, it can impact the availability and performance of the web application running on the Tomcat server."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if there's enough available memory"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `free -m`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current memory usage by the Tomcat server"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `ps -ef | grep tomcat`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the memory settings in the Tomcat configuration file"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `cat ${PATH_TO_TOMCAT}/bin/setenv.sh`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the JVM memory usage"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `jstat -gc ${TOMCAT_PID} 1000 10`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the heap dump for memory leaks"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `jmap -dump:format=b,file=${HEAP_DUMP_FILE_PATH} ${TOMCAT_PID}`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Analyze the heap dump for memory leak issues"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `jhat ${HEAP_DUMP_FILE_PATH}`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the garbage collector logs for clues"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `tail -f ${PATH_TO_TOMCAT}/logs/gc.log`"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check for any errors in the Tomcat logs"
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `tail -f ${PATH_TO_TOMCAT}/logs/catalina.out`"
+    },
+    {
+      "name": "cell_18",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Memory Leak: One of the possible reasons for the Tomcat JVM OutOfMemory incident could be a memory leak in the application causing it to consume all available memory."
+    },
+    {
+      "name": "cell_19",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_tomcat_memory_leak_detection($THRESHOLD)"
+    },
+    {
+      "name": "cell_20",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Increase the memory allocation for the Tomcat server by modifying its configuration files."
+    },
+    {
+      "name": "cell_21",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_memory_tomcat_restart()"
+    }
+  ]
+}
